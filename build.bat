@@ -1,0 +1,1 @@
+browserify -t coffeeify js --extension=".coffee" -o datepicker.js

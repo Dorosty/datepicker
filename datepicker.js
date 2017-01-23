@@ -258,15 +258,8 @@ var jalali,
 
 jalali = require('./jalali');
 
-window.datepicker = function(textbox, rightAlign) {
-  var E, append, body, boxStyle, calendar, calendarStyle, cellStyle, chevronStyle, date, dateCells, displayMonth, displayYear, extend, getNextMonth, getPrevMonth, gotoDate, gotoMonth, headerText, month, nextMonth, nextYear, onEvent, prevMonth, prevYear, ref, ref1, setStyle, text, toPersian, year;
-  toPersian = function(value) {
-    value = String(value);
-    '۰۱۲۳۴۵۶۷۸۹'.split('').forEach(function(digit, i) {
-      return value = value.replace(new RegExp('' + i, 'g'), digit);
-    });
-    return value;
-  };
+window.datepicker = function(placeholder, rightAlign) {
+  var E, append, createCalendar, createTextbox, d0, d1, date, displayMonth, displayYear, extend, fromCalendar, fromTextbox, fromTitle, getNextMonth, getPrevMonth, m0, m1, month, onEvent, partWidth, ref, ref1, setStyle, text, textboxStyle, toCalendar, toEnglish, toPersian, toTextbox, toTitle, y0, y1, year;
   extend = function() {
     var sources, target;
     target = arguments[0], sources = 2 <= arguments.length ? slice.call(arguments, 1) : [];
@@ -276,6 +269,23 @@ window.datepicker = function(textbox, rightAlign) {
       });
     });
     return target;
+  };
+  toPersian = function(value) {
+    value = String(value);
+    '۰۱۲۳۴۵۶۷۸۹'.split('').forEach(function(digit, i) {
+      return value = value.replace(new RegExp('' + i, 'g'), digit);
+    });
+    return value;
+  };
+  toEnglish = function(value) {
+    if (value == null) {
+      value = '';
+    }
+    value = '' + value;
+    '۰۱۲۳۴۵۶۷۸۹'.split('').forEach(function(digit, i) {
+      return value = value.replace(new RegExp(digit, 'g'), i);
+    });
+    return value;
   };
   setStyle = function(element, style) {
     return Object.keys(style).forEach(function(key) {
@@ -353,188 +363,360 @@ window.datepicker = function(textbox, rightAlign) {
   date = date.getDate();
   ref = jalali.toJalaali(year, month, date), year = ref.jy, month = ref.jm, date = ref.jd;
   ref1 = [year, month], displayYear = ref1[0], displayMonth = ref1[1];
-  body = document.body;
-  boxStyle = {
-    width: 50,
-    height: 50,
-    lineHeight: 50,
-    textAlign: 'center'
+  createCalendar = function(textbox, callback) {
+    return (function(year, month, date, displayYear, displayMonth) {
+      var boxStyle, calendar, calendarStyle, cellStyle, chevronStyle, dateCells, gotoDate, gotoMonth, headerText, nextMonth, nextYear, otherDate, otherMonth, otherYear, prevMonth, prevYear, ref2;
+      ref2 = [year, month, date], otherYear = ref2[0], otherMonth = ref2[1], otherDate = ref2[2];
+      boxStyle = {
+        width: 40,
+        height: 40,
+        lineHeight: 40,
+        textAlign: 'center'
+      };
+      cellStyle = extend({
+        display: 'inline-block',
+        border: '1px solid #41698a',
+        marginLeft: -1,
+        marginBottom: -1
+      }, boxStyle);
+      chevronStyle = {
+        position: 'absolute',
+        cursor: 'pointer',
+        top: 7,
+        color: '#aaa',
+        width: 40,
+        height: 30,
+        lineHeight: 30,
+        fontSize: 25
+      };
+      calendar = E(calendarStyle = {
+        position: 'absolute',
+        fontSize: 20,
+        width: 7 * cellStyle.width + 6,
+        height: 8 * cellStyle.width + 17,
+        border: '1px solid transparent',
+        cursor: 'default'
+      }, nextYear = E(extend({
+        left: 0,
+        textAlign: 'left'
+      }, chevronStyle), text('‹‹')), nextMonth = E(extend({
+        left: 30,
+        textAlign: 'left'
+      }, chevronStyle), text('‹')), headerText = E({
+        marginTop: 10,
+        width: '100%',
+        height: 30,
+        lineHeight: 30,
+        textAlign: 'center',
+        color: '#41698a'
+      }), prevMonth = E(extend({
+        right: 30,
+        textAlign: 'right'
+      }, chevronStyle), text('›')), prevYear = E(extend({
+        right: 0,
+        textAlign: 'right'
+      }, chevronStyle), text('››')), E({
+        direction: 'rtl'
+      }, ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'].map(function(day, i) {
+        var cell;
+        cell = E(extend({
+          backgroundColor: '#41698a',
+          color: 'white'
+        }, cellStyle), text(day));
+        if (i === 0) {
+          setStyle(cell, {
+            marginRight: -1
+          });
+        }
+        return cell;
+      }), dateCells = E()));
+      gotoMonth = function(y, m) {
+        var amend, compareDates, day, gd, gm, gy, j, k, l, monthLength, nm, ny, pm, prevMonthLength, py, ref3, ref4, ref5, ref6, ref7, ref8, results, results1, results2, selectedDate;
+        ref3 = [y, m], displayYear = ref3[0], displayMonth = ref3[1];
+        headerText.innerHTML = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'][displayMonth - 1] + ' ' + toPersian(displayYear);
+        monthLength = jalali.jalaaliMonthLength(displayYear, displayMonth);
+        ref4 = getPrevMonth(displayYear, displayMonth), py = ref4.year, pm = ref4.month;
+        ref5 = getNextMonth(displayYear, displayMonth), ny = ref5.year, nm = ref5.month;
+        prevMonthLength = jalali.jalaaliMonthLength(py, pm);
+        ref6 = jalali.toGregorian(displayYear, displayMonth, 1), gy = ref6.gy, gm = ref6.gm, gd = ref6.gd;
+        day = new Date(gy, gm - 1, gd).getDay() + 1;
+        while (dateCells.children.length) {
+          dateCells.removeChild(dateCells.children[0]);
+        }
+        compareDates = function(y0, m0, d0, y1, m1, d1) {
+          if (y0 > y1) {
+            return 1;
+          } else if (y0 < y1) {
+            return -1;
+          } else {
+            if (m0 > m1) {
+              return 1;
+            } else if (m0 < m1) {
+              return -1;
+            } else {
+              if (d0 > d1) {
+                return 1;
+              } else if (d0 < d1) {
+                return -1;
+              } else {
+                return 0;
+              }
+            }
+          }
+        };
+        amend = function(cell, y, m, d) {
+          var compare, ref10, ref7, ref8, ref9;
+          compare = ((ref7 = compareDates(y, m, d, year, month, date)) === 0 || ref7 === 1) && ((ref8 = compareDates(y, m, d, otherYear, otherMonth, otherDate)) === 0 || ref8 === (-1)) ? setStyle(cell, {
+            backgroundColor: '#ffdbdb'
+          }) : void 0;
+          if (((ref9 = compareDates(y, m, d, year, month, date)) === 0 || ref9 === (-1)) && ((ref10 = compareDates(y, m, d, otherYear, otherMonth, otherDate)) === 0 || ref10 === 1)) {
+            return setStyle(cell, {
+              backgroundColor: '#ffdbdb'
+            });
+          }
+        };
+        append(dateCells, (function() {
+          results = [];
+          for (var j = ref7 = prevMonthLength - day + 1; ref7 <= prevMonthLength ? j <= prevMonthLength : j >= prevMonthLength; ref7 <= prevMonthLength ? j++ : j--){ results.push(j); }
+          return results;
+        }).apply(this).map(function(date) {
+          var cell;
+          cell = E(extend({
+            color: '#ccc',
+            cursor: 'pointer'
+          }, cellStyle), text(toPersian(date)));
+          amend(cell, py, pm, date);
+          if (date === prevMonthLength - day + 1) {
+            setStyle(cell, {
+              marginRight: -1
+            });
+          }
+          onEvent(cell, 'click', function() {
+            return gotoDate(py, pm, date);
+          });
+          return cell;
+        }));
+        selectedDate = date;
+        append(dateCells, (function() {
+          results1 = [];
+          for (var k = 1; 1 <= monthLength ? k <= monthLength : k >= monthLength; 1 <= monthLength ? k++ : k--){ results1.push(k); }
+          return results1;
+        }).apply(this).map(function(date) {
+          var cell;
+          cell = E(extend({
+            color: '#41698a',
+            cursor: 'pointer'
+          }, cellStyle), text(toPersian(date)));
+          amend(cell, displayYear, displayMonth, date);
+          if (((day + date) % 7) === 1) {
+            setStyle(cell, {
+              marginRight: -1
+            });
+          }
+          if (selectedDate === date && month === displayMonth && year === displayYear) {
+            setStyle(cell, {
+              backgroundColor: '#ff6b6b'
+            });
+          }
+          onEvent(cell, 'click', function() {
+            return gotoDate(displayYear, displayMonth, date);
+          });
+          return cell;
+        }));
+        return append(dateCells, (function() {
+          results2 = [];
+          for (var l = 1, ref8 = 42 - monthLength - day; 1 <= ref8 ? l <= ref8 : l >= ref8; 1 <= ref8 ? l++ : l--){ results2.push(l); }
+          return results2;
+        }).apply(this).map(function(date) {
+          var cell;
+          cell = E(extend({
+            color: '#ccc',
+            cursor: 'pointer'
+          }, cellStyle), text(toPersian(date)));
+          amend(cell, ny, nm, date);
+          if (((day + date + monthLength) % 7) === 1) {
+            setStyle(cell, {
+              marginRight: -1
+            });
+          }
+          onEvent(cell, 'click', function() {
+            return gotoDate(ny, nm, date);
+          });
+          return cell;
+        }));
+      };
+      gotoDate = calendar.gotoDate = function(y, m, d, skipTextbox) {
+        var ref3;
+        ref3 = [y, m, d], year = ref3[0], month = ref3[1], date = ref3[2];
+        gotoMonth(year, month);
+        if (!skipTextbox) {
+          textbox.value = toPersian(year + "/" + month + "/" + date);
+        }
+        return callback(y, m, d);
+      };
+      calendar.setOtherDate = function(y, m, d) {
+        var ref3;
+        if (otherYear === y && otherMonth === m && otherDate === d) {
+          return;
+        }
+        ref3 = [y, m, d], otherYear = ref3[0], otherMonth = ref3[1], otherDate = ref3[2];
+        return gotoMonth(year, month);
+      };
+      gotoDate(year, month, date);
+      onEvent(prevYear, 'click', function() {
+        return gotoMonth(displayYear - 1, displayMonth);
+      });
+      onEvent(nextYear, 'click', function() {
+        return gotoMonth(displayYear + 1, displayMonth);
+      });
+      onEvent(prevMonth, 'click', function() {
+        var m, ref3, y;
+        ref3 = getPrevMonth(displayYear, displayMonth), y = ref3.year, m = ref3.month;
+        return gotoMonth(y, m);
+      });
+      onEvent(nextMonth, 'click', function() {
+        var m, ref3, y;
+        ref3 = getNextMonth(displayYear, displayMonth), y = ref3.year, m = ref3.month;
+        return gotoMonth(y, m);
+      });
+      return calendar;
+    })(year, month, date, displayYear, displayMonth);
   };
-  cellStyle = extend({
-    display: 'inline-block',
-    border: '1px solid black',
-    marginLeft: -1,
-    marginBottom: -1
-  }, boxStyle);
-  chevronStyle = extend({
-    position: 'absolute',
-    cursor: 'pointer',
-    top: 10
-  }, boxStyle);
-  calendar = E(calendarStyle = {
-    position: 'absolute',
-    fontSize: 20,
-    width: 7 * 50 + 6,
-    height: 8 * 50 + 17,
-    backgroundColor: 'white',
-    border: '1px solid black',
-    cursor: 'default'
-  }, nextYear = E(extend({
-    left: 10
-  }, chevronStyle), text('‹‹')), nextMonth = E(extend({
-    left: 60
-  }, chevronStyle), text('‹')), headerText = E({
-    marginTop: 10,
-    width: '100%',
-    height: 50,
-    lineHeight: 50,
-    textAlign: 'center'
-  }), prevMonth = E(extend({
-    right: 60
-  }, chevronStyle), text('›')), prevYear = E(extend({
-    right: 10
-  }, chevronStyle), text('››')), E({
-    direction: 'rtl'
-  }, ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'].map(function(day, i) {
-    var cell;
-    cell = E(extend({
-      backgroundColor: 'grey',
-      color: 'white'
-    }, cellStyle), text(day));
-    if (i === 0) {
-      setStyle(cell, {
-        marginRight: -1
-      });
-    }
-    return cell;
-  }), dateCells = E()));
-  gotoMonth = function(y, m) {
-    var day, gd, gm, gy, j, k, l, monthLength, nm, ny, pm, prevMonthLength, py, ref2, ref3, ref4, ref5, ref6, ref7, results, results1, results2, selectedDate;
-    ref2 = [y, m], displayYear = ref2[0], displayMonth = ref2[1];
-    headerText.innerHTML = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'][displayMonth - 1] + ' ' + toPersian(displayYear);
-    monthLength = jalali.jalaaliMonthLength(displayYear, displayMonth);
-    ref3 = getPrevMonth(displayYear, displayMonth), py = ref3.year, pm = ref3.month;
-    ref4 = getNextMonth(displayYear, displayMonth), ny = ref4.year, nm = ref4.month;
-    prevMonthLength = jalali.jalaaliMonthLength(py, pm);
-    ref5 = jalali.toGregorian(displayYear, displayMonth, 1), gy = ref5.gy, gm = ref5.gm, gd = ref5.gd;
-    day = new Date(gy, gm - 1, gd).getDay() + 1;
-    while (dateCells.children.length) {
-      dateCells.removeChild(dateCells.children[0]);
-    }
-    append(dateCells, (function() {
-      results = [];
-      for (var j = ref6 = prevMonthLength - day + 1; ref6 <= prevMonthLength ? j <= prevMonthLength : j >= prevMonthLength; ref6 <= prevMonthLength ? j++ : j--){ results.push(j); }
-      return results;
-    }).apply(this).map(function(date) {
-      var cell;
-      cell = E(extend({
-        color: 'grey',
-        cursor: 'pointer'
-      }, cellStyle), text(toPersian(date)));
-      if (date === prevMonthLength - day + 1) {
-        setStyle(cell, {
-          marginRight: -1
-        });
-      }
-      onEvent(cell, 'click', function() {
-        return gotoDate(py, pm, date);
-      });
-      return cell;
-    }));
-    selectedDate = date;
-    append(dateCells, (function() {
-      results1 = [];
-      for (var k = 1; 1 <= monthLength ? k <= monthLength : k >= monthLength; 1 <= monthLength ? k++ : k--){ results1.push(k); }
-      return results1;
-    }).apply(this).map(function(date) {
-      var cell;
-      cell = E(extend({
-        cursor: 'pointer'
-      }, cellStyle), text(toPersian(date)));
-      if (((day + date) % 7) === 1) {
-        setStyle(cell, {
-          marginRight: -1
-        });
-      }
-      if (date === selectedDate && month === displayMonth && year === displayYear) {
-        setStyle(cell, {
-          backgroundColor: 'lightblue'
-        });
-      }
-      onEvent(cell, 'click', function() {
-        return gotoDate(year, month, date);
-      });
-      return cell;
-    }));
-    return append(dateCells, (function() {
-      results2 = [];
-      for (var l = 1, ref7 = 42 - monthLength - day; 1 <= ref7 ? l <= ref7 : l >= ref7; 1 <= ref7 ? l++ : l--){ results2.push(l); }
-      return results2;
-    }).apply(this).map(function(date) {
-      var cell;
-      cell = E(extend({
-        color: 'grey',
-        cursor: 'pointer'
-      }, cellStyle), text(toPersian(date)));
-      if (((day + date + monthLength) % 7) === 1) {
-        setStyle(cell, {
-          marginRight: -1
-        });
-      }
-      onEvent(cell, 'click', function() {
-        return gotoDate(ny, nm, date);
-      });
-      return cell;
-    }));
+  createTextbox = function() {
+    return document.createElement('input');
   };
-  gotoDate = function(y, m, d) {
+  fromTextbox = createTextbox();
+  toTextbox = createTextbox();
+  y0 = m0 = d0 = y1 = m1 = d1 = void 0;
+  fromCalendar = createCalendar(fromTextbox, function(y, m, d) {
     var ref2;
-    ref2 = [y, m, d], year = ref2[0], month = ref2[1], date = ref2[2];
-    textbox.value = toPersian(year + "/" + month + "/" + date);
-    return gotoMonth(year, month);
-  };
-  gotoDate(year, month, date);
-  onEvent(prevYear, 'click', function() {
-    return gotoMonth(displayYear - 1, displayMonth);
-  });
-  onEvent(nextYear, 'click', function() {
-    return gotoMonth(displayYear + 1, displayMonth);
-  });
-  onEvent(prevMonth, 'click', function() {
-    var m, ref2, y;
-    ref2 = getPrevMonth(displayYear, displayMonth), y = ref2.year, m = ref2.month;
-    return gotoMonth(y, m);
-  });
-  onEvent(nextMonth, 'click', function() {
-    var m, ref2, y;
-    ref2 = getNextMonth(displayYear, displayMonth), y = ref2.year, m = ref2.month;
-    return gotoMonth(y, m);
-  });
-  onEvent(calendar, 'mousedown', function(e) {
-    return e.preventDefault();
-  });
-  onEvent(textbox, 'focus', function() {
-    var element, height, left, top, width;
-    width = textbox.offsetWidth, height = textbox.offsetHeight;
-    top = left = 0;
-    element = textbox;
-    while (true) {
-      top += element.offsetTop || 0;
-      left += element.offsetLeft || 0;
-      element = element.offsetParent;
-      if (!element) {
-        break;
+    setTimeout(function() {
+      return toCalendar.setOtherDate(y, m, d);
+    });
+    ref2 = [y, m, d], y0 = ref2[0], m0 = ref2[1], d0 = ref2[2];
+    if (y0 > y1) {
+      return toCalendar.gotoDate(y0, m0, d0);
+    } else if (y0 === y1) {
+      if (m0 > m1) {
+        return toCalendar.gotoDate(y0, m0, d0);
+      } else if (m0 === m1) {
+        if (d0 > d1) {
+          return toCalendar.gotoDate(y0, m0, d0);
+        }
       }
     }
-    setStyle(calendar, {
-      top: top + height,
-      left: rightAlign ? left + width - calendarStyle.width : left
+  });
+  toCalendar = createCalendar(toTextbox, function(y, m, d) {
+    var ref2;
+    setTimeout(function() {
+      return fromCalendar.setOtherDate(y, m, d);
     });
-    return append(body, calendar);
+    ref2 = [y, m, d], y1 = ref2[0], m1 = ref2[1], d1 = ref2[2];
+    if (y0 > y1) {
+      return fromCalendar.gotoDate(y1, m1, d1);
+    } else if (y0 === y1) {
+      if (m0 > m1) {
+        return fromCalendar.gotoDate(y1, m1, d1);
+      } else if (m0 === m1) {
+        if (d0 > d1) {
+          return fromCalendar.gotoDate(y1, m1, d1);
+        }
+      }
+    }
   });
-  return onEvent(textbox, 'blur', function(e) {
-    return body.removeChild(calendar);
+  textboxStyle = {
+    border: '1px solid #ddd',
+    outline: 'none',
+    width: 200,
+    borderRadius: 3,
+    padding: 7,
+    fontSize: 15,
+    height: 15,
+    lineHeight: 15,
+    position: 'absolute',
+    top: 35
+  };
+  partWidth = 320;
+  setStyle(fromTextbox, extend({
+    right: 0
+  }, textboxStyle));
+  setStyle(toTextbox, extend({
+    right: partWidth
+  }, textboxStyle));
+  setStyle(fromCalendar, {
+    top: 75,
+    right: 0
   });
+  setStyle(toCalendar, {
+    top: 75,
+    right: partWidth
+  });
+  fromTitle = E({
+    position: 'absolute',
+    fontSize: 17,
+    direction: 'rtl',
+    color: '#41698a',
+    top: 5,
+    right: 0
+  });
+  toTitle = E({
+    position: 'absolute',
+    fontSize: 17,
+    direction: 'rtl',
+    color: '#41698a',
+    top: 5,
+    right: partWidth
+  });
+  fromTitle.innerHTML = 'از تاریخ:';
+  toTitle.innerHTML = 'تا تاریخ:';
+  append(placeholder, E({
+    position: 'relative',
+    width: partWidth * 2,
+    backgroundColor: 'white'
+  }, fromTitle, toTitle, fromTextbox, toTextbox, fromCalendar, toCalendar));
+  [fromTextbox, toTextbox].forEach(function(input, i) {
+    var prevValue;
+    prevValue = '';
+    return onEvent(input, 'input', function() {
+      var d, m, parts, ref2, ref3, valid, value, y;
+      value = toEnglish(input.value);
+      parts = value.split('/');
+      valid = (function() {
+        switch (parts.length) {
+          case 1:
+            return /^(1?|13[0-9]?[0-9]?)$/.test(parts[0]);
+          case 2:
+            return /^13[0-9][0-9]$/.test(parts[0]) && /^([1-9]?|1[0-2])$/.test(parts[1]);
+          case 3:
+            return /^13[0-9][0-9]$/.test(parts[0]) && /^([1-9]|1[0-2])$/.test(parts[1]) && /^([1-9]?|[1-2][0-9]|3[0-1])$/.test(parts[2]);
+        }
+      })();
+      if (valid) {
+        if (/^13[0-9][0-9]\/([1-9]|1[0-2])\/([1-9]|[1-2][0-9]|3[0-1])$/.test(toEnglish(input.value))) {
+          ref2 = value.split('/'), y = ref2[0], m = ref2[1], d = ref2[2];
+          ref3 = [+y, +m, +d], y = ref3[0], m = ref3[1], d = ref3[2];
+          if (jalali.isValidJalaaliDate(y, m, d)) {
+            prevValue = value;
+            if (i === 0) {
+              fromCalendar.gotoDate(y, m, d, true);
+            } else {
+              toCalendar.gotoDate(y, m, d, true);
+            }
+          } else {
+            value = prevValue;
+          }
+        } else {
+          prevValue = value;
+        }
+      } else {
+        value = prevValue;
+      }
+      return input.value = toPersian(value);
+    });
+  });
+  return function() {
+    return [y0 + "/" + m0 + "/" + d0, y1 + "/" + m1 + "/" + d1];
+  };
 };
 
 
